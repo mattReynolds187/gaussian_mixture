@@ -13,7 +13,7 @@ class GaussianMixture(NamedTuple):
 def init(X: np.ndarray, K: int,
          seed: int = 0) -> Tuple[GaussianMixture, np.ndarray]:
     """Initializes the mixture model with random points as initial
-    means and uniform assingments
+    means and uniform assignments
 
     Args:
         X: (n, d) array holding the data
