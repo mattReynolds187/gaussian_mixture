@@ -1,11 +1,10 @@
 """Mixture model for matrix completion"""
 from typing import Tuple
 import numpy as np
-from scipy.special import logsumexp
-from common import GaussianMixture
+from helper_code import GaussianMixture
 
 def logged_gauss_incomplete_p(X, mu, var, p):
-    
+
     n,d = X.shape
     k = var.shape[0]
     delta = np.where(X == 0, 0, 1) #nxd
@@ -14,15 +13,15 @@ def logged_gauss_incomplete_p(X, mu, var, p):
     u_3d = (mu*np.ones([n,k,d]))*delta_reshaped
     sub_stack = u_3d-X_reshaped #nxkxd
     norm_squared = np.sum(sub_stack*sub_stack, axis = 2)#nxk
-    
+
     exp_factor_logged = -norm_squared/(2*var)
     C_u = np.sum(delta, axis = 1, keepdims=True)
-    
+
     var_2d = var*np.ones([n,k])
     first_factor_logged = np.log(p) - (C_u/2)*np.log(2*np.pi*var_2d)
-    
+
     return first_factor_logged + exp_factor_logged
-    
+
 
 
 def estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
@@ -45,9 +44,9 @@ def estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
     denominator_logged = max_vector + np.log(np.sum(scaled_gauss, axis = 1, keepdims=True))
     log_post = logged_gauss_p - denominator_logged
     log_likelihood = np.sum(denominator_logged)
-    
+
     return np.exp(log_post), log_likelihood
-    
+
 def mstep(X: np.ndarray, post: np.ndarray, mixture: GaussianMixture,
           min_variance: float = .25) -> GaussianMixture:
     """M-step: Updates the gaussian mixture by maximizing the log-likelihood
@@ -67,29 +66,29 @@ def mstep(X: np.ndarray, post: np.ndarray, mixture: GaussianMixture,
     n, d = X.shape
     k = post.shape[1]
     new_p = np.sum(post , axis = 0)/n
-    
+
     delta = np.where(X == 0, 0, 1) #nxd
     mu_numerator = np.dot(X.T, post).T
     mu_denominator = np.dot(delta.T, post).T
     new_mu = np.where(mu_denominator >= 1, mu_numerator/(mu_denominator + 1e-16), mu) #kxd
-    
+
     delta_reshaped = delta.reshape([delta.shape[0],1,delta.shape[1]]) #nx1xd
     X_reshaped = X.reshape([n,1,d])
     u_3d = (new_mu*np.ones([n,k,d]))*delta_reshaped
     sub_stack = u_3d-X_reshaped #nxkxd
     norm_squared = np.sum(sub_stack*sub_stack, axis = 2)#nxk
-            
+
     C_u = np.sum(delta, axis = 1, keepdims=True)
-    
+
     summation_factor = np.sum(post*norm_squared, axis = 0)
     first_factor = 1/np.sum(C_u*post, axis = 0)
     var_bad = first_factor*summation_factor
     new_var = np.where(var_bad < min_variance, min_variance, var_bad)
-    
+
     mixture.mu[:] = new_mu[:]
     mixture.var[:] = new_var[:]
     mixture.p[:] = new_p[:]
-    
+
     return mixture
 
 
@@ -131,9 +130,5 @@ def fill_matrix(X: np.ndarray, mixture: GaussianMixture) -> np.ndarray:
     post = estep(X, mixture)[0]
     new_values = np.dot(post, mu)
     new_X = np.where(X==0, new_values, X)
-    
+
     return new_X
-    
-    
-    
-    
