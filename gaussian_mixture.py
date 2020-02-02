@@ -69,7 +69,7 @@ class GMM:
 
         return np.exp(log_post), log_likelihood
 
-    def mstep(self, post, min_variance=.25):
+    def mstep(self, post, min_variance):
         """
         Performs the maximization step of the EM algorithm. Since no regularization
         is implemented we use a minimum variance to control for vanishing variance.
@@ -101,9 +101,7 @@ class GMM:
         self.var = new_var
         self.p = new_p
 
-    def run(self):
-
-        history = []
+    def run(self, min_variance=.25):
         flag = False
         while True:
             post, new_log_likelihood = self.estep()
@@ -111,8 +109,7 @@ class GMM:
             if flag and new_log_likelihood - old_log_likelihood <= abs(new_log_likelihood)/(10**6):
                 break
             old_log_likelihood = new_log_likelihood
-            history.append(new_log_likelihood)
-            self.mstep(post)
+            self.mstep(post, min_variance)
             flag = True
 
     def fill_matrix(self):
