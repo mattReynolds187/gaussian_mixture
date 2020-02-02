@@ -5,12 +5,13 @@ class GMM:
         np.random.seed(seed)
         self.X = X
         self.mu = X[np.random.choice(X.shape[0], K, replace=False)]
-        self.var = np.ones(K)
-        for j in range(K):
-            self.var[j] = ((X - self.mu[j])**2).mean()
-
         self.p = np.ones(K)/K
         self.log_likelihood = None
+
+        #vectorized computation of variance vector
+        n = X.shape[0]
+        d = X.shape[1]
+        self.var = np.sum((self.mu*np.ones([n, K, d]) - X.reshape([n, 1, d]))**2, axis=(0,2))/(n*d)
 
     def logged_gauss_incomplete_p(self):
 
@@ -65,7 +66,7 @@ class GMM:
         first_factor = 1/np.sum(C_u*post, axis = 0)
         var_bad = first_factor*summation_factor
         new_var = np.where(var_bad < min_variance, min_variance, var_bad)
-        
+
         self.mu = new_mu
         self.var = new_var
         self.p = new_p
@@ -89,3 +90,7 @@ class GMM:
         new_X = np.where(self.X==0, new_values, self.X)
 
         return new_X
+
+    @staticmethod
+    def evaluate_rmse(filled_matrix, test_matrix):
+        return np.sqrt(np.mean((filled_matrix - test_matrix)**2))
