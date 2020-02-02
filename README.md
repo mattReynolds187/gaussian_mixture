@@ -24,3 +24,8 @@ Use the static method evaluate_rmse to evaluate the root mean square error of th
 An example usage on preprocessed real netflix data (provided by MIT) is shown in the associated jupyter notebook. Each row in the file represents a netflix user and the ratings from 1-5 they gave to each movie (represented by the columns). Entries of 0 represent movies they have not reviewed.  
 
 Future updates to this repository may include examples of how to preprocess the original messy netflix data from which this is derived.  
+
+TODO:  
+Add examples of preprocessing data to be used by model.  
+Add context and explanation to example usage.  
+Make model attributes 'private' and write a getter function for the parameters of a model that has been run.  
