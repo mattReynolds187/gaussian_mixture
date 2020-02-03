@@ -43,7 +43,7 @@ class GMM:
     def compute_norm_squared(self):
         """
         Vectorized computation of ||X-mu||^2 across all data.
-        Used in both log likelihood functions and m-step.
+        Used in both log likelihood function and m-step.
         """
 
         delta_reshaped = self.delta.reshape([self.n, 1, self.d]) #nx1xd
