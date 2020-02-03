@@ -31,7 +31,7 @@ class GMM:
         #a gaussian component
         self.mu = X[np.random.choice(X.shape[0], K, replace=False)]
 
-	    #initialization of the weights for each cluster
+        #initialization of the weights for each cluster
         self.p = np.ones(K)/K
 
         #initialization of shape Kx1 variance vector
