@@ -20,10 +20,12 @@ class GMM:
         """
         np.random.seed(seed)
         self.X = X
-        self.delta = np.where(self.X == 0, 0, 1)
         self.n = X.shape[0]
         self.d = X.shape[1]
         self.k = K
+
+        # delta is an nxd matrix of zeroes and ones representing where X has missing data
+        self.delta = np.where(self.X == 0, 0, 1)
 
         #random initialization of Kxd mean matrix. Each row represents the mean of
         #a gaussian component
@@ -56,11 +58,9 @@ class GMM:
         """
         Computes and returns the log likelihood function to be optimized by EM algorithm.
         """
+        exp_factor_logged = -self.compute_norm_squared()/(2*self.var)
 
-        norm_squared = self.compute_norm_squared()
-        exp_factor_logged = -norm_squared/(2*self.var)
         C_u = np.sum(self.delta, axis = 1, keepdims=True)
-
         var_2d = self.var*np.ones([self.n, self.k])
         first_factor_logged = np.log(self.p) - (C_u/2)*np.log(2*np.pi*var_2d)
 
