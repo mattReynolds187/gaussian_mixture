@@ -20,38 +20,48 @@ class GMM:
         """
         np.random.seed(seed)
         self.X = X
+        self.delta = np.where(self.X == 0, 0, 1)
+        self.n = X.shape[0]
+        self.d = X.shape[1]
+        self.k = K
 
         #random initialization of Kxd mean matrix. Each row represents the mean of
         #a gaussian component
         self.mu = X[np.random.choice(X.shape[0], K, replace=False)]
 
-	#initialization of the weights for each cluster
+	    #initialization of the weights for each cluster
         self.p = np.ones(K)/K
+
+        #initialization of shape Kx1 variance vector
+        #each component represents the variance of a gaussian cluster
+        self.var = np.sum((self.mu*np.ones([self.n, self.k, self.d]) - X.reshape([self.n, 1, self.d]))**2, axis=(0,2))/(self.n*self.d)
+
         self.history = []
 
-        #initialization of shape kx1 variance vector
-        #each component represents the variance of a gaussian cluster
-        n = X.shape[0]
-        d = X.shape[1]
-        self.var = np.sum((self.mu*np.ones([n, K, d]) - X.reshape([n, 1, d]))**2, axis=(0,2))/(n*d)
+    def compute_norm_squared(self):
+        """
+        Vectorized computation of ||X-mu||^2 across all data.
+        Used in both log likelihood functions and m-step.
+        """
+
+        delta_reshaped = self.delta.reshape([self.n, 1, self.d]) #nx1xd
+        X_reshaped = self.X.reshape([self.n, 1, self.d])
+        u_3d = (self.mu*np.ones([self.n, self.k, self.d]))*delta_reshaped
+        sub_stack = u_3d-X_reshaped #nxkxd
+
+        return np.sum(sub_stack*sub_stack, axis = 2)#nxk
+
 
     def logged_gauss(self):
         """
-        Computes and returns the log likelihood to be optimized by EM algorithm.
+        Computes and returns the log likelihood function to be optimized by EM algorithm.
         """
-        n,d = self.X.shape
-        k = self.var.shape[0]
-        delta = np.where(self.X == 0, 0, 1) #nxd
-        delta_reshaped = delta.reshape([delta.shape[0],1,delta.shape[1]]) #nx1xd
-        X_reshaped = self.X.reshape([n,1,d])
-        u_3d = (self.mu*np.ones([n,k,d]))*delta_reshaped
-        sub_stack = u_3d-X_reshaped #nxkxd
-        norm_squared = np.sum(sub_stack*sub_stack, axis = 2)#nxk
 
+        norm_squared = self.compute_norm_squared()
         exp_factor_logged = -norm_squared/(2*self.var)
-        C_u = np.sum(delta, axis = 1, keepdims=True)
+        C_u = np.sum(self.delta, axis = 1, keepdims=True)
 
-        var_2d = self.var*np.ones([n,k])
+        var_2d = self.var*np.ones([self.n, self.k])
         first_factor_logged = np.log(self.p) - (C_u/2)*np.log(2*np.pi*var_2d)
 
         return first_factor_logged + exp_factor_logged
@@ -75,32 +85,21 @@ class GMM:
         Performs the maximization step of the EM algorithm. Since no regularization
         is implemented we use a minimum variance to control for vanishing variance.
         """
-
-        n, d = self.X.shape
-        k = post.shape[1]
-        new_p = np.sum(post , axis = 0)/n
-
-        delta = np.where(self.X == 0, 0, 1) #nxd
+        #update mu
         mu_numerator = np.dot(self.X.T, post).T
-        mu_denominator = np.dot(delta.T, post).T
-        new_mu = np.where(mu_denominator >= 1, mu_numerator/(mu_denominator + 1e-16), self.mu) #kxd
+        mu_denominator = np.dot(self.delta.T, post).T
+        self.mu = np.where(mu_denominator >= 1, mu_numerator/(mu_denominator + 1e-16), self.mu) #kxd
 
-        delta_reshaped = delta.reshape([delta.shape[0],1,delta.shape[1]]) #nx1xd
-        X_reshaped = self.X.reshape([n,1,d])
-        u_3d = (new_mu*np.ones([n,k,d]))*delta_reshaped
-        sub_stack = u_3d-X_reshaped #nxkxd
-        norm_squared = np.sum(sub_stack*sub_stack, axis = 2)#nxk
-
-        C_u = np.sum(delta, axis = 1, keepdims=True)
-
+        #update variance
+        C_u = np.sum(self.delta, axis = 1, keepdims=True)
+        norm_squared = self.compute_norm_squared()
         summation_factor = np.sum(post*norm_squared, axis = 0)
         first_factor = 1/np.sum(C_u*post, axis = 0)
         var_bad = first_factor*summation_factor
-        new_var = np.where(var_bad < min_variance, min_variance, var_bad)
+        self.var = np.where(var_bad < min_variance, min_variance, var_bad)
 
-        self.mu = new_mu
-        self.var = new_var
-        self.p = new_p
+        #updating the weights for each cluster
+        self.p = np.sum(post , axis = 0)/self.n
 
     def run(self, min_variance=.25):
         flag = False
