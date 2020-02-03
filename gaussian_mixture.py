@@ -40,25 +40,27 @@ class GMM:
 
         self.history = []
 
+        #storing ||x-mu||^2 to be used in log likelihood function and m-step
+        self.norm_squared = self.compute_norm_squared()
+
     def compute_norm_squared(self):
         """
         Vectorized computation of ||X-mu||^2 across all data.
         Used in both log likelihood function and m-step.
         """
-
         delta_reshaped = self.delta.reshape([self.n, 1, self.d]) #nx1xd
         X_reshaped = self.X.reshape([self.n, 1, self.d])
         u_3d = (self.mu*np.ones([self.n, self.k, self.d]))*delta_reshaped
         sub_stack = u_3d-X_reshaped #nxkxd
 
-        return np.sum(sub_stack*sub_stack, axis = 2)#nxk
+        return np.sum(sub_stack**2, axis = 2)#nxk
 
 
     def logged_gauss(self):
         """
         Computes and returns the log likelihood function to be optimized by EM algorithm.
         """
-        exp_factor_logged = -self.compute_norm_squared()/(2*self.var)
+        exp_factor_logged = -self.norm_squared/(2*self.var)
 
         C_u = np.sum(self.delta, axis = 1, keepdims=True)
         var_2d = self.var*np.ones([self.n, self.k])
@@ -92,14 +94,16 @@ class GMM:
 
         #update variance
         C_u = np.sum(self.delta, axis = 1, keepdims=True)
-        norm_squared = self.compute_norm_squared()
-        summation_factor = np.sum(post*norm_squared, axis = 0)
+        summation_factor = np.sum(post*self.norm_squared, axis = 0)
         first_factor = 1/np.sum(C_u*post, axis = 0)
         var_bad = first_factor*summation_factor
         self.var = np.where(var_bad < min_variance, min_variance, var_bad)
 
         #updating the weights for each cluster
         self.p = np.sum(post , axis = 0)/self.n
+
+        #updating norm_squared
+        self.norm_squared = self.compute_norm_squared()
 
     def run(self, min_variance=.25):
         flag = False
@@ -113,7 +117,9 @@ class GMM:
             flag = True
 
     def fill_matrix(self):
-
+        """
+        Fills the matrix using the completed model.
+        """
         post = self.estep()[0]
         new_values = np.dot(post, self.mu)
         new_X = np.where(self.X==0, new_values, self.X)
