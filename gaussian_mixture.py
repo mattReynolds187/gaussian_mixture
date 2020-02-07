@@ -24,23 +24,29 @@ class GMM:
         self.d = X.shape[1]
         self.k = K
 
-        # delta is an nxd matrix of zeroes and ones representing where X has missing data
+        #delta is an nxd matrix of zeroes and ones representing where X has missing data
+        #(the uth row of delta corresponds to C_u from the notebook)
         self.delta = np.where(self.X == 0, 0, 1)
 
         #random initialization of Kxd mean matrix. Each row represents the mean of
-        #a gaussian component
+        #a gaussian component (corresponds to mu from the notebook)
         self.mu = X[np.random.choice(X.shape[0], K, replace=False)]
 
         #initialization of the weights for each cluster
+        #(corresponds to pi from the notebook)
         self.p = np.ones(K)/K
 
         #initialization of shape Kx1 variance vector
         #each component represents the variance of a gaussian cluster
-        self.var = np.sum((self.mu*np.ones([self.n, self.k, self.d]) - X.reshape([self.n, 1, self.d]))**2, axis=(0,2))/(self.n*self.d)
-
+        #(corresponds to sigma^2 from the notebook)
+        self.var = np.sum((self.mu*np.ones([self.n, self.k, self.d]) - X.reshape([self.n, 1, self.d]))**2, 
+                           axis=(0,2))/(self.n*self.d)
+        
+        #a list to store the log_likelihood at each step of the EM algorithm
         self.history = []
 
-        #storing ||x-mu||^2 to be used in log likelihood function and m-step
+        #initializaing ||x-mu||^2 across all data as seen in the Gaussian density function 
+        #will be used in log likelihood function and m-step
         self.norm_squared = self.compute_norm_squared()
 
     def compute_norm_squared(self):
@@ -58,7 +64,8 @@ class GMM:
 
     def logged_gauss(self):
         """
-        Computes and returns the log likelihood function to be optimized by EM algorithm.
+        Computes and returns the log of the Gaussian density function across all data
+        (corresponds to N() in the log likelihood function)
         """
         exp_factor_logged = -self.norm_squared/(2*self.var)
 
@@ -116,19 +123,20 @@ class GMM:
             self.mstep(post, min_variance)
             flag = True
 
-    def fill_matrix(self):
+    def fill_matrix(self, to_fill):
         """
         Fills the matrix using the completed model.
         """
         post = self.estep()[0]
         new_values = np.dot(post, self.mu)
-        new_X = np.where(self.X==0, new_values, self.X)
+        filled = np.where(to_fill==0, new_values, to_fill)
 
-        return new_X
+        return filled
 
     def plot_history(self):
         plt.plot(self.history)
-        plt.ylabel('log_likelihood')
+        plt.ylabel('Log Likelihood')
+        plt.xlabel('EM Algorithm Step')
         plt.show()
 
     @staticmethod
