@@ -26,6 +26,7 @@ class GMM:
 
         #delta is an nxd matrix of zeroes and ones representing where X has missing data
         #(the uth row of delta corresponds to C_u from the notebook)
+        #(also corresponds to delta(l|C_u) from notebook)
         self.delta = np.where(self.X == 0, 0, 1)
 
         #random initialization of Kxd mean matrix. Each row represents the mean of
@@ -79,6 +80,10 @@ class GMM:
         """
         Performs the expectation step of the EM algorithm. Uses LogSumExp trick
         to help ensure numerical stability.
+        
+        Returns:
+            Post - nxK np.ndarray (corresponds to P(j|u) from the notebook)
+            Log Likelihood - current value of the log likelihood function
         """
         logged_gauss = self.logged_gauss()
         max_vector = np.amax(logged_gauss, axis=1, keepdims=True)
@@ -91,8 +96,12 @@ class GMM:
 
     def mstep(self, post, min_variance):
         """
-        Performs the maximization step of the EM algorithm. Since no regularization
-        is implemented we use a minimum variance to control for vanishing variance.
+        Performs the maximization step of the EM algorithm and updates the parameters. Since 
+        no regularization is implemented we use a minimum variance to control for vanishing variance.
+        
+        args:
+            post - Kxn np.ndarray (corresponds to P(j|u) from the notebook)
+            min_variance - lower bound on the variance allowed
         """
         #update mu
         mu_numerator = np.dot(self.X.T, post).T
