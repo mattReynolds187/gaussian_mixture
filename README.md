@@ -1,6 +1,3 @@
-*Ongoing Project*  
-the model is completed but the explanations and example implementations on real unprocessed netflix data are still in progress
-
 This is a fully vectorized from scratch implimentation of a Gaussian Mixture Model for matrix completion. This project is inspired by a project I completed for MIT's edx course 'Machine Learning With Python: From Linear Models to Deep Learning'  In this repository we show how to use the model for completing matrices of netflix users and movies they have reviewed. I.E. how to use the model for building a movie recommendation system.  
 
 An example usage on preprocessed real netflix data (provided by MIT) as well as an explanation of some of the math involved is shown in the associated jupyter notebook. Each row in the file represents a netflix user and the ratings from 1-5 they gave to each movie (represented by the columns). Entries of 0 represent movies they have not reviewed.  
@@ -10,6 +7,9 @@ Github does not properly render mathematical formulas, so please view the .ipynb
 https://nbviewer.jupyter.org/github/synnfusion/gaussian_mixture/blob/master/example_usage.ipynb
 
 No external libraries besides numpy (and matplotlib for plotting) are used.  
+
+Use make_training_array.py to parse data from https://archive.org/download/nf_prize_dataset.tar that can be passed to the mixture model.  
+It can prepare a matrix from over 17 thousand netflix movies and over 400 thousand reviewers to be used by the GMM class. It is customizable depending on computing power.
 
 The gaussian mixture constructor takes 3 arguments:  
 X - nxd np.ndarray with values 0-5 where n is the number of users and d is the dimension of the data (number of movies)  
