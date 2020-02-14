@@ -8,9 +8,6 @@ https://nbviewer.jupyter.org/github/synnfusion/gaussian_mixture/blob/master/exam
 
 No external libraries besides numpy (and matplotlib for plotting) are used.  
 
-Use make_training_array.py to parse data from https://archive.org/download/nf_prize_dataset.tar that can be passed to the mixture model.  
-It can prepare a matrix from over 17 thousand netflix movies and over 400 thousand reviewers to be used by the GMM class. It is customizable depending on computing power.
-
 The gaussian mixture constructor takes 3 arguments:  
 X - nxd np.ndarray with values 0-5 where n is the number of users and d is the dimension of the data (number of movies)  
     the model expects 0 to represent non-existent entries or movies that have not been reviewed by the corresponding user  
