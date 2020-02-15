@@ -4,7 +4,8 @@ An example usage on preprocessed real netflix data (provided by MIT) as well as 
 
 *Important*  
 Github does not properly render mathematical formulas, so please view the .ipynb file in Jupyter's notebook viewer:  
-https://nbviewer.jupyter.org/github/synnfusion/gaussian_mixture/blob/master/example_usage.ipynb
+https://nbviewer.jupyter.org/github/synnfusion/gaussian_mixture/blob/master/explanation_and_example.ipynb
+
 
 No external libraries besides numpy (and matplotlib for plotting) are used.  
 
